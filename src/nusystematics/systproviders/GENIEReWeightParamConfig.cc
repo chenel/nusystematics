@@ -270,17 +270,13 @@ SystMetaData ConfigureMECParameterHeaders(fhicl::ParameterSet const &cfg,
 
   return ConfigureSetOfIndependentParameters(
       cfg, firstParamId,
-      { kXSecTwkDial_NormCCMEC,
-        kXSecTwkDial_NormNCMEC,
-        kXSecTwkDial_NormEMMEC,
-        kXSecTwkDial_DecayAngMEC,
-        kXSecTwkDial_DecayAng2MEC,
-        kXSecTwkDial_FracPN_CCMEC,
-        kXSecTwkDial_FracDelta_CCMEC,
-        kXSecTwkDial_XSecShape_CCMEC,
-        kXSecTwkDial_XSecShape_CCMEC_Empirical,
-        kXSecTwkDial_XSecShape_CCMEC_Martini,
-        kXSecTwkDial_EnergyDependence_CCMEC}
+      {kXSecTwkDial_NormCCMEC,
+       kXSecTwkDial_NormNCMEC,
+       kXSecTwkDial_NormEMMEC,
+       kXSecTwkDial_DecayAngMEC,
+       kXSecTwkDial_FracPN_CCMEC,
+       kXSecTwkDial_FracDelta_CCMEC,
+       kXSecTwkDial_XSecShape_CCMEC}
   );
 
 }
