@@ -42,6 +42,9 @@ SystMetaData FSIReweight::BuildSystMetaData(ParameterSet const &cfg,
   fill_valid_tree = cfg.get<bool>("fill_valid_tree", false);
   tool_options.put("fill_valid_tree", fill_valid_tree);
 
+  save_map = cfg.get<bool>("save_map", false);
+  tool_options.put("save_map", save_map);
+
   return smd;
 }
 
@@ -62,6 +65,14 @@ bool FSIReweight::SetupResponseCalculator(
   if (fill_valid_tree) {
     InitValidTree();
   }
+
+  save_map = tool_options.get<bool>("save_map", false);
+  if (save_map) {
+    std::cout << "[[FSIReweight::SetupResponseCalculator] save_map is True" << std::endl;
+    outfile_map = new TFile("FSI_2Dmap.root", "recreate");
+    h_KEini_Ebias = new TH2D("h_KEini_Ebias", "Ebias vs KEini; KEini [GeV]; Ebias [GeV]", 40, 0, 2, 40, -0.9, 1.1);
+  }
+
 
   return true;
 }
@@ -289,7 +300,7 @@ void FSIReweight::InitValidTree() {
 FSIReweight::~FSIReweight() {
   if (save_map) {
     h_KEini_Ebias->Write("hA2018_proton_KEini_vs_Ebias");
-    outfile->Write();
+    outfile_map->Write();
   }
   if (valid_file) {
     valid_tree->SetDirectory(valid_file);

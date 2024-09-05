@@ -17,13 +17,7 @@
 class FSIReweight : public nusyst::IGENIESystProvider_tool {
 
   std::unique_ptr<nusyst::FSIReweightCalculator> fsiReweightCalculator;
-  bool save_map = false; // option to save the 2D map from neutrino sample, which can be compared to the input template from hadron sample
-  TFile* outfile;
-  TH2D* h_KEini_Ebias;
-  if (save_map) {
-    outfile = new TFile("FSI_2Dmap.root", "recreate");
-    h_KEini_Ebias = new TH2D("h_KEini_Ebias", "Ebias vs KEini; KEini [GeV]; Ebias [GeV]", 40, 0, 2, 40, -0.9, 1.1);
-  }
+
 public:
   explicit FSIReweight(fhicl::ParameterSet const &);
 
@@ -51,6 +45,11 @@ private:
   bool fill_valid_tree;
   TFile *valid_file;
   TTree *valid_tree;
+
+  // option to save the 2D map from neutrino sample, which can be compared to the input template from hadron sample
+  bool save_map;
+  TFile* outfile_map;
+  TH2D* h_KEini_Ebias;
 
   int NEUTMode, Pdgnu, pdgfslep, QELTarget;
   double Enu, momfslep, cthetafslep, Q2, q0, q3, W;
