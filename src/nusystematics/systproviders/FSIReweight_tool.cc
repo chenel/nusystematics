@@ -53,15 +53,6 @@ bool FSIReweight::SetupResponseCalculator(
   fhicl::ParameterSet templateManifest =
       tool_options.get<fhicl::ParameterSet>("FSIReweight_input_manifest");
 
-  std::string kin_Y_str(""), kin_Z_str("");
-  kin_Y_str = "q3";
-  kin_Z_str = "q0";
-
-  std::cout << "[FSIReweight::SetupResponseCalculator] Template binnings are" << std::endl;
-  std::cout << "[FSIReweight::SetupResponseCalculator] x: E_nu" << std::endl;
-  std::cout << "[FSIReweight::SetupResponseCalculator] y: " << kin_Y_str << std::endl;
-  std::cout << "[FSIReweight::SetupResponseCalculator] z: " << kin_Z_str << std::endl;
-
   fsiReweightCalculator = std::make_unique<FSIReweightCalculator>( templateManifest );
 
   ResponseParameterIdx =
@@ -206,7 +197,6 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
         switch (IShad->Pdg()) {
           case 2212:
             Ebias = (KEini - Ehad) / KEini;
-            //h_KEini_Ebias->Fill( KEini, Ebias );
             break;
           case 2112:
             Ebias = (KEini - Ehad) / KEini;
@@ -226,6 +216,7 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
             weight = 1;
             continue;
         }
+        if (save_map) h_KEini_Ebias->Fill( KEini, Ebias );
         //cout<<IShad->Name()<<": KEini "<<KEini<<"; Ehad "<<Ehad<<"; Ebias "<<Ebias<<endl;
         double this_reweight = fsiReweightCalculator->GetFSIReweight(KEini, Ebias, var, IShad->Pdg());
         weight *= this_reweight;
@@ -296,8 +287,10 @@ void FSIReweight::InitValidTree() {
 }
 
 FSIReweight::~FSIReweight() {
-  //h_KEini_Ebias->Write("hA2018_proton_KEini_vs_Ebias");
-  savemap->Write();
+  if (save_map) {
+    h_KEini_Ebias->Write("hA2018_proton_KEini_vs_Ebias");
+    outfile->Write();
+  }
   if (valid_file) {
     valid_tree->SetDirectory(valid_file);
     valid_file->Write();
