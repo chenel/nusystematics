@@ -55,20 +55,4 @@ private:
   double Enu, momfslep, cthetafslep, Q2, q0, q3, W;
 };
 
-void get_FS_daughters(genie::GHepParticle* par, vector<genie::GHepParticle*>& FSdaughters, genie::EventRecord const &ev) {
-  if (par->Status() == 1) {
-    FSdaughters.push_back(par);
-    return;
-  }
-  //if (par->FirstDaughter()==-1) {
-  //  cout<<"No daughter for this particle..."<<endl;
-  //  return;
-  //}
-  for (int ip=par->FirstDaughter(); ip<=par->LastDaughter(); ip++) {
-    get_FS_daughters(ev.Particle(ip), FSdaughters, ev);
-  }
-}
-
-
-
 #endif
