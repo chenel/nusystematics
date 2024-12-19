@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nusystematics/utility/exceptions.hh"
 #include "systematicstools/interface/ISystProviderTool.hh"
 
 #include "fhiclcpp/ParameterSet.h"
@@ -82,6 +83,29 @@ public:
   /// Calculates configured response for a given GHep record
   virtual systtools::event_unit_response_t
   GetEventResponse(genie::EventRecord const &) = 0;
+
+  /// Calculates response, allowing parameter values to be overridden locally
+  systtools::event_unit_response_t
+  GetEventResponse(genie::EventRecord const & evt,
+    std::vector<std::pair<systtools::paramId_t, std::vector<double>>> const & paramVals)
+  {
+    systtools::SystMetaData params = this->GetSystMetaData();
+    for (const auto & paramList  : paramVals)
+    {
+
+      systtools::paramId_t param = paramList.first;
+      auto it_Vars = std::find_if(params.begin(), params.end(),
+                                                   [param](const systtools::SystParamHeader & p) { return p.systParamId == param; });
+
+      if (it_Vars == params.end())
+        throw systtools::parameter_Id_not_handled() << "Parameter " << std::to_string(param)
+                                                    << " is not configured, can't calculate response for it";
+
+      this->OverrideVariations(param, paramList.second);
+    }
+
+    return GetEventResponse(evt);
+  }
 
   /// Calculates configured response for a given vector of GHep record
   std::unique_ptr<systtools::EventResponse>
