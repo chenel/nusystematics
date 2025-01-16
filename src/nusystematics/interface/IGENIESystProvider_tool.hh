@@ -1,5 +1,7 @@
 #pragma once
 
+#include <numeric>
+
 #include "nusystematics/utility/exceptions.hh"
 #include "systematicstools/interface/ISystProviderTool.hh"
 
@@ -89,22 +91,53 @@ public:
   GetEventResponse(genie::EventRecord const & evt,
     std::vector<std::pair<systtools::paramId_t, std::vector<double>>> const & paramVals)
   {
+    // store the config as it was before we did anything
     systtools::SystMetaData params = this->GetSystMetaData();
-    for (const auto & paramList  : paramVals)
+
+    // keep track of whether we've seen every intended parameter
+    std::set<systtools::paramId_t> paramIdsSeen;
+    for (const systtools::SystParamHeader & hdr : params)
     {
+      auto it_paramPair = std::find_if(paramVals.begin(), paramVals.end(),
+                                                        [&hdr](const std::pair<systtools::paramId_t, std::vector<double>> & pair)
+                                                        {
+                                                          return pair.first == hdr.systParamId;
+                                                        });
 
-      systtools::paramId_t param = paramList.first;
-      auto it_Vars = std::find_if(params.begin(), params.end(),
-                                                   [param](const systtools::SystParamHeader & p) { return p.systParamId == param; });
-
-      if (it_Vars == params.end())
-        throw systtools::parameter_Id_not_handled() << "Parameter " << std::to_string(param)
-                                                    << " is not configured, can't calculate response for it";
-
-      this->OverrideVariations(param, paramList.second);
+      // erase any parameters that aren't in the desired set
+      if (it_paramPair == paramVals.end())
+        this->OverrideVariations(hdr.systParamId, {});
+      else
+      {
+        paramIdsSeen.insert(hdr.systParamId);
+        this->OverrideVariations(hdr.systParamId, it_paramPair->second);
+      }
     }
 
-    return GetEventResponse(evt);
+    // check that we found all the desired parameters
+    std::set<systtools::paramId_t> paramsDesired;
+    std::transform(paramVals.begin(), paramVals.end(), std::inserter(paramsDesired, paramsDesired.begin()),
+      [](const std::pair<systtools::paramId_t, std::vector<double>> & pair) { return pair.first; });
+    std::set<systtools::paramId_t> lostParams;
+    std::set_difference(paramsDesired.begin(), paramsDesired.end(), paramIdsSeen.begin(), paramIdsSeen.end(),
+      std::inserter(lostParams, lostParams.begin()));
+
+    if (!lostParams.empty())
+    {
+      std::string concat = std::accumulate(lostParams.begin(), lostParams.end(), std::string(""),
+        [](std::string a, double b){ return std::move(a) + ", " + std::to_string(b); });
+      throw systtools::parameter_Id_not_handled() << "Parameter ID(s) " << concat
+                                                  << " is (are) not configured, can't calculate response for it (them)";
+    }
+
+    // actually get the responses we want
+    auto resp = GetEventResponse(evt);
+
+    // now reset the config back to what it was
+    for (const systtools::SystParamHeader & hdr : params)
+      this->OverrideVariations(hdr.systParamId, hdr.paramVariations);
+
+    return resp;
   }
 
   /// Calculates configured response for a given vector of GHep record
